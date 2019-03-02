@@ -15,7 +15,6 @@ class StreamListener(tweepy.StreamListener):
         # UNCOMMENT TO REDUCE AMOUNT OF TWEETS
         # if status.retweeted_status:
         #     return
-
         description = status.user.description
         loc = status.user.location
         text = status.text
@@ -32,7 +31,13 @@ class StreamListener(tweepy.StreamListener):
         quote_count = status.quote_count
         user_no_tweet = status.user.statuses_count
         friends_count = status.user.friends_count
-        retweeted_status = status.retweeted
+        try:
+            if status.retweeted_status:
+                retweeted_s = True
+
+        except:
+            retweeted_s = False
+
         bg_color = status.user.profile_background_color
         favorite_count = status.favorite_count
         entities = status.entities
@@ -65,7 +70,7 @@ class StreamListener(tweepy.StreamListener):
                 retweet_count=retweets,
                 reply_count=reply_count,
                 quote_count=quote_count,
-                retweeted_status=retweeted_status,
+                retweeted_status=retweeted_s,
                 origin_source=source,
                 user_name=name,
                 user_handle=user_handle,
