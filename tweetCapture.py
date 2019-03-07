@@ -149,13 +149,14 @@ if settings.TRENDDATA_UPDATE:
     trends_list = data['trends']
     names = [trend['name'] for trend in trends_list]
 
-start = time.time()
+
 track_list_trends = settings.TRACK_TERMS + names
 print("Starting Caputuring:")
 print(track_list_trends)
 str_track_list = ''.join(track_list_trends)
 str_track_list_encoded = str_track_list.encode("utf-8")
-sendMail(sub=("Tweet Capture Alert " + settings.FOOTER_SUBJECT), text=("Currently capturing " + str(str_track_list_encoded)))
+sendMail(sub=("Tweet Capture Alert " + settings.FOOTER_SUBJECT), text=("!!STARTING!! Currently capturing " + str(str_track_list_encoded)))
+start = time.time()
 stream.filter(track=track_list_trends)
 
 
@@ -172,3 +173,5 @@ while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
     print("starting streaming now!")
     start = done
     stream.filter(track=track_list_trends)
+    done = time.time()
+    elapsed = done - start
