@@ -4,9 +4,14 @@ import dataset
 from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
 import json
+import time
+
 
 db = dataset.connect(settings.CONNECTION_STRING)
 tweetNo = 0
+done = 0
+elapsed = 0
+names = []
 
 
 class StreamListener(tweepy.StreamListener):
@@ -31,6 +36,7 @@ class StreamListener(tweepy.StreamListener):
         quote_count = status.quote_count
         user_no_tweet = status.user.statuses_count
         friends_count = status.user.friends_count
+        verified_stat = status.user.verified
         try:
             if status.retweeted_status:
                 retweeted_s = True
@@ -86,10 +92,20 @@ class StreamListener(tweepy.StreamListener):
                 user_bg_color=bg_color,
                 polarity=sent.polarity,
                 subjectivity=sent.subjectivity,
+                verified_status=verified_stat,
             ))
             global tweetNo
+            global done, elapsed
+            done = time.time()
+            elapsed = done - start
             tweetNo += 1
-            print("Tweet Counter : ", tweetNo)
+            if settings.TRENDDATA_UPDATE:
+                print("Tweet Counter : ", tweetNo, "|| Time to Refresh:", int(settings.REFRESH_TIME - elapsed))
+            else:
+                print("Tweet Counter : ", tweetNo)
+            if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
+                print("Renewing list")
+                return False
         except ProgrammingError as err:
             print(err)
 
@@ -102,7 +118,30 @@ class StreamListener(tweepy.StreamListener):
 auth = tweepy.OAuthHandler(settings.TWITTER_KEY, settings.TWITTER_SECRET)
 auth.set_access_token(settings.TWITTER_APP_KEY, settings.TWITTER_APP_SECRET)
 api = tweepy.API(auth)
-
 stream_listener = StreamListener()
 stream = tweepy.Stream(auth=api.auth, listener=stream_listener)
-stream.filter(track=settings.TRACK_TERMS)
+
+if settings.TRENDDATA_UPDATE:
+    data = api.trends_place(settings.PLACE_CODE)[0]
+    trends_list = data['trends']
+    names = [trend['name'] for trend in trends_list]
+
+start = time.time()
+track_list_trends = settings.TRACK_TERMS + names
+print("Starting Caputuring:")
+print(track_list_trends)
+stream.filter(track=track_list_trends)
+
+
+while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
+    # time.sleep(2)
+    data = api.trends_place(settings.PLACE_CODE)[0]
+    trends_list = data['trends']
+    names = [trend['name'] for trend in trends_list]
+    track_list_trends = settings.TRACK_TERMS + names
+    print("-----------List aquired-------------")
+    print(track_list_trends)
+    print("-----------Rolling back the streaming--------------")
+    print("starting streaming now!")
+    start = done
+    stream.filter(track=track_list_trends)
