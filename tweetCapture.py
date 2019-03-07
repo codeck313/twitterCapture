@@ -111,7 +111,7 @@ class StreamListener(tweepy.StreamListener):
             if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
                 print("Renewing list")
                 return False
-            if tweetNo % settings.ALERT_DURATION == 0:
+            if (tweetNo % settings.ALERT_DURATION[0] == 0) | (tweetNo % settings.ALERT_DURATION[1] == 0):
                 sendMail(sub=("Tweet Counter Alert " + settings.FOOTER_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
         except ProgrammingError as err:
             print(err)
