@@ -1,6 +1,6 @@
 TRACK_TERMS = ["ThankYouImranKhan", "India", "Pakistan", "TerrorStatePakistan", "#SayNoToWar", "BalakotAirStrike", "#Balakot"]
 TRENDDATA_UPDATE = True
-REFRESH_TIME = 10
+REFRESH_TIME = 18000
 CSV_NAME = "tweetdata.csv"
 TABLE_NAME = "tdata"
 # PLACE_CODE = 2211096 #pakistan
