@@ -5,6 +5,8 @@ from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
 import json
 import time
+import smtplib
+import ssl
 
 
 db = dataset.connect(settings.CONNECTION_STRING)
@@ -12,6 +14,9 @@ tweetNo = 0
 done = 0
 elapsed = 0
 names = []
+
+port = 587  # For starttls
+smtp_server = "smtp.gmail.com"
 
 
 class StreamListener(tweepy.StreamListener):
@@ -106,13 +111,23 @@ class StreamListener(tweepy.StreamListener):
             if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
                 print("Renewing list")
                 return False
+            if tweetNo % settings.ALERT_DURATION == 0:
+                sendMail(sub=("Tweet Counter Alert " + settings.FOOTER_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
         except ProgrammingError as err:
             print(err)
+            sendMail(sub=("Database error " + settings.FOOTER_SUBJECT), text=err)
 
     def on_error(self, status_code):
+        sendMail(sub=("Tweepy Error " + settings.FOOTER_SUBJECT), text=str(status_code))
         if status_code == 420:
             # returning False in on_data disconnects the stream
             return False
+
+
+def sendMail(sub="Hi there", text="foobar"):
+    message = "Subject: " + sub + " \n\n " + text
+    smtpserver.sendmail(settings.SENDER_EMIAL, settings.RECEVIER_EMAIL, message)
+    print("Sending email To:", settings.RECEVIER_EMAIL)
 
 
 auth = tweepy.OAuthHandler(settings.TWITTER_KEY, settings.TWITTER_SECRET)
@@ -120,6 +135,14 @@ auth.set_access_token(settings.TWITTER_APP_KEY, settings.TWITTER_APP_SECRET)
 api = tweepy.API(auth)
 stream_listener = StreamListener()
 stream = tweepy.Stream(auth=api.auth, listener=stream_listener)
+
+context = ssl.create_default_context()
+smtpserver = smtplib.SMTP("smtp.gmail.com", 587)
+smtpserver.ehlo()
+smtpserver.starttls()
+smtpserver.ehlo()
+smtpserver.login(settings.SENDER_EMIAL, settings.PASWD)
+
 
 if settings.TRENDDATA_UPDATE:
     data = api.trends_place(settings.PLACE_CODE)[0]
@@ -130,6 +153,9 @@ start = time.time()
 track_list_trends = settings.TRACK_TERMS + names
 print("Starting Caputuring:")
 print(track_list_trends)
+str_track_list = ''.join(track_list_trends)
+str_track_list_encoded = str_track_list.encode("utf-8")
+sendMail(sub=("Tweet Capture Alert " + settings.FOOTER_SUBJECT), text=("Currently capturing " + str(str_track_list_encoded)))
 stream.filter(track=track_list_trends)
 
 
@@ -141,6 +167,7 @@ while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
     track_list_trends = settings.TRACK_TERMS + names
     print("-----------List aquired-------------")
     print(track_list_trends)
+    sendMail(sub=("Tweet Capture Alert " + settings.FOOTER_SUBJECT), text=("Currently capturing" + track_list_trends))
     print("-----------Rolling back the streaming--------------")
     print("starting streaming now!")
     start = done

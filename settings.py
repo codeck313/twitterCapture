@@ -1,12 +1,20 @@
-TRACK_TERMS = ["ThankYouImranKhan", "India", "Pakistan", "TerrorStatePakistan", "#SayNoToWar", "BalakotAirStrike", "#Balakot"]
+TRACK_TERMS = []
 TRENDDATA_UPDATE = True
-REFRESH_TIME = 10
+REFRESH_TIME = 18000
 CSV_NAME = "tweetdata.csv"
 TABLE_NAME = "tdata"
 # PLACE_CODE = 2211096 #pakistan
 PLACE_CODE = 2295411  # india
-TWITTER_KEY = "Consumer API key"
-TWITTER_SECRET = "Consumer API Secret key"
+
+MAIL_ALLERT = True
+ALERT_DURATION = 10000
+FOOTER_SUBJECT = "IND"
+SENDER_EMIAL = # emailID
+RECEVIER_EMAIL =# emaiID
+PASWD = # password
+
+TWITTER_KEY =  "Consumer API key"
+TWITTER_SECRET ="Consumer API Secret key"
 TWITTER_APP_KEY ="Access token"
 TWITTER_APP_SECRET ="Access token secret"
 CONNECTION_STRING = "sqlite:///tweetdata.db"
