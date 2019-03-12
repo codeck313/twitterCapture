@@ -1,5 +1,20 @@
+
 # twitterCapture
 This is a automation script for *tweepy's streaming class* with some included with some additional features allowing it to be run on a external server to capture data right of the bat. It has **E-Mail notification** and ability to **update** one's **filter terms** based on the **trends list** of a particular area built into it. It stores everything into a sqlite3 database by default.
+
+## Table of contents
+
+ * [Getting Started](https://github.com/codeck313/twitterCapture#getting-started)
+     * [Prerequisites](https://github.com/codeck313/twitterCapture#prerequisites)
+     * [Setup](https://github.com/codeck313/twitterCapture#setup)
+* [Customization](https://github.com/codeck313/twitterCapture#customization)
+     * [Enabling Mail Alert](https://github.com/codeck313/twitterCapture#enabling-mail-alert)
+     * [Database customization](https://github.com/codeck313/twitterCapture#database-customization)
+     * [Enabling Trendlist update functionality](https://github.com/codeck313/twitterCapture#enabling-trendlist-update-functionality)
+* [METADATA Being Collected](https://github.com/codeck313/twitterCapture#metadata-being-collected)
+* [Deployment on  a Linux Server (Raspberry Pi)](https://github.com/codeck313/twitterCapture#deployment-on--a-linux-server-raspberry-pi)
+* [Build With](https://github.com/codeck313/twitterCapture#build-with)
+* [Acknowledgement](https://github.com/codeck313/twitterCapture#acknowledgement)
 
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for testing purposes. See deployment notes on how to deploy the project on a to run 24x7 on system.
