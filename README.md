@@ -154,14 +154,15 @@ Next up edit the `connectivity.sh`  line 5 to point to the place where the `laun
           5) echo "The web proxy won't let us through";;
 Now use chmod `+x connectivity.sh` and chmod `+x launcher.sh` to convert them into executable.
 
+Make a folder logs in you home directory.
 Now type the following command into to terminal:
 
     crontab -e
 
 and add these following lines to it :
 
-    @reboot sh /path/to/connectivity.sh > ~/logs/cronlogTwitterCapture 2>&1
-    */5 * * * * sh ~/indCap/connectivity.sh > ~/logs/cronlogTwitterCapture 2>&1
+    @reboot sh /path/to/connectivity.sh > ~/logs/cronlogRE 2>&1
+    */5 * * * * sh ~/path/to/connectivity.sh > ~/logs/cronlog 2>&1
 **Remeber to change** the */path/to/connectivity.sh* to path of your `connectivity.sh` file.
 * The first line makes the script to run on every reboot of the system
 * Second line runs the script every 5 mins.Though the python script will run if and only if its not running already.
