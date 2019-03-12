@@ -22,10 +22,7 @@
 # m h  dom mon dow   command
 
 
-@reboot  sh ~/indCap/connectivity.sh > ~/logs/cronlogIND 2>&1
-@reboot  sh ~/pakCap/connectivity.sh > ~/logs/cronlogPAK 2>&1
-
-*/5 * * * * sh ~/pakCap/connectivity.sh > ~/logs/cronlogPAK 2>&1
-*/5 * * * * sh ~/indCap/connectivity.sh > ~/logs/cronlogIND 2>&1
+@reboot  sh ~/path/to/connectivity.sh > ~/logs/cronlogRE 2>&1
+*/5 * * * * sh ~/path/to/connectivity.sh > ~/logs/cronlog 2>&1
 
 
