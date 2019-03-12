@@ -152,6 +152,7 @@ Next up edit the `connectivity.sh`  line 5 to point to the place where the `laun
     [23])  echo "HTTP connectivity is up "
         /path/to/launcher.sh;;  <<<< THIS LINE
           5) echo "The web proxy won't let us through";;
+Now use chmod `+x connectivity.sh` and chmod `+x launcher.sh` to convert them into executable.
 
 Now type the following command into to terminal:
 
