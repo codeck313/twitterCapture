@@ -9,7 +9,7 @@ import smtplib
 import ssl
 
 
-db = dataset.connect(settings.CONNECTION_STRING)
+db = dataset.connect(settings.CONNECTION_DATABASE)
 tweetNo = 0
 done = 0
 elapsed = 0
@@ -63,6 +63,7 @@ class StreamListener(tweepy.StreamListener):
         place_corr = ''
         if coordinates is not None:
             coordinates = json.dumps(coordinates)
+
         if place is not None:
             place_name = place.full_name
 
@@ -78,26 +79,26 @@ class StreamListener(tweepy.StreamListener):
         try:
             table.insert(dict(
                 text=text,
+                id_str=id_str,
                 hashtags=hashtags,
-                entities=entitiesDUMP,
                 tweet_created=created,
-                isRT=retweeted_s,
-                origin_source=source,
                 user_name=name,
                 user_handle=user_handle,
+                verified_status=verified_stat,
+                origin_source=source,
+                isRT=retweeted_s,
+                coordinates=coordinates,
+                user_location=loc,
+                place_name=place_name,
                 user_description=description,
                 user_followers=followers,
-                no_tweet_user=user_no_tweet,
                 friends_count=friends_count,
-                place_name=place_name,
-                coordinates=coordinates,
+                no_tweet_user=user_no_tweet,
                 user_created=user_created,
-                user_location=loc,
-                id_str=id_str,
                 user_bg_color=bg_color,
+                entities=entitiesDUMP,
                 polarity=sent.polarity,
                 subjectivity=sent.subjectivity,
-                verified_status=verified_stat,
             ))
             global tweetNo
             global done, elapsed, tweetRateCount
@@ -112,8 +113,12 @@ class StreamListener(tweepy.StreamListener):
             if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
                 print("Renewing list")
                 return False
-            if (tweetNo % settings.ALERT_DURATION[0] == 0) | (tweetNo % settings.ALERT_DURATION[1] == 0):
-                sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
+            if settings.ALERT_DURATION[0] != 0:
+                if (tweetNo % settings.ALERT_DURATION[0] == 0):
+                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
+            elif settings.ALERT_DURATION[1] != 0:
+                if (tweetNo % settings.ALERT_DURATION[1] == 0):
+                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
         except ProgrammingError as err:
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
@@ -127,15 +132,16 @@ class StreamListener(tweepy.StreamListener):
 
 
 def sendMail(sub="Hi there", text="foobar"):
-    smtpserver = smtplib.SMTP(settings.SMTP_SERVER, settings.PORT)
-    smtpserver.ehlo()
-    smtpserver.starttls()
-    smtpserver.ehlo()
-    smtpserver.login(settings.SENDER_EMAIL, settings.PASWD)
-    message = ("Subject: " + sub + " \n\n " + text).encode("utf-8")
-    smtpserver.sendmail(settings.SENDER_EMAIL, settings.RECEVIER_EMAIL, message)
-    print("Sending email To:", settings.RECEVIER_EMAIL)
-    smtpserver.quit()
+    if settings.MAIL_ALERT:
+        smtpserver = smtplib.SMTP(settings.SMTP_SERVER, settings.PORT)
+        smtpserver.ehlo()
+        smtpserver.starttls()
+        smtpserver.ehlo()
+        smtpserver.login(settings.SENDER_EMAIL, settings.PASWD)
+        message = ("Subject: " + sub + " \n\n " + text).encode("utf-8")
+        smtpserver.sendmail(settings.SENDER_EMAIL, settings.RECEVIER_EMAIL, message)
+        print("Sending email To:", settings.RECEVIER_EMAIL)
+        smtpserver.quit()
 
 
 # context = ssl.create_default_context()
@@ -177,7 +183,7 @@ while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
     str_track_list = ' \n '.join(track_list_trends)
     print("-----------List aquired-------------")
     print(track_list_trends)
-    sendMail(sub=("Tweepy Trend List Renew " + settings.EMAIL_SUBJECT), text=("Currently capturing " + str_track_list + "\n\n TweetRate(per min) : " + str(tweetRateCount / (elapsed / 60))))
+    sendMail(sub=("Tweepy Trend List Renew " + settings.EMAIL_SUBJECT), text=("TweetRate(per min) : " + str(tweetRateCount / (elapsed / 60)) + "\n\n Currently capturing " + str_track_list))
     print("-----------Rolling back the streaming--------------")
     print("starting streaming now!")
     start = done
