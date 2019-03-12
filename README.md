@@ -176,6 +176,6 @@ Now after a reboot your script should start running. If for some reason it gets 
 
 
 ## Acknowledgement
-* Thanks to [Jinal](https://github.com/jinalskothari) for his unwavering support.
+* Thanks to [Jinal](https://github.com/jinalskothari) and Aditya for their unwavering support.
 * [WeWorkPlay Article on conrtab](https://weworkweplay.com/play/rebooting-the-raspberry-pi-when-it-loses-wireless-connection-wifi/)
 * Gilles [For the web connectivity testing tool](https://unix.stackexchange.com/questions/190513/shell-scripting-proper-way-to-check-for-internet-connectivity/190610)
