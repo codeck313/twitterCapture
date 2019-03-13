@@ -14,7 +14,7 @@ if (sys.version_info > (3, 0)):
     print("Python 3")
     from http.client import IncompleteRead
 else:
-    print("python 2")
+    print("Python 2")
     from httplib import IncompleteRead
 
 
