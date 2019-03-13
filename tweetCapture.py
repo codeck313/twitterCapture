@@ -3,12 +3,20 @@ import tweepy
 import dataset
 from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
-from http.client import IncompleteRead
 import json
 import time
 import smtplib
 import ssl
 import threading
+import sys
+
+if (sys.version_info > (3, 0)):
+    print("Python 3")
+    from http.client import IncompleteRead
+else:
+    print("python 2")
+    from httplib import IncompleteRead
+
 
 db = dataset.connect(settings.CONNECTION_DATABASE)
 tweetNo = 0
