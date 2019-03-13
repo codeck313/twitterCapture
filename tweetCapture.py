@@ -26,6 +26,11 @@ names = []
 tweetRateCount = 0
 
 
+class trendUpdate(RuntimeError):
+    def __init__(self, arg):
+        self.args = arg
+
+
 class StreamListener(tweepy.StreamListener):
 
     def on_status(self, status):
@@ -122,7 +127,7 @@ class StreamListener(tweepy.StreamListener):
 
             if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
                 print("Renewing list")
-                raise Exception("Break for renewing trendlist")
+                raise trendUpdate("Break for renewing trendlist")
 
             try:
                 if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
@@ -193,10 +198,8 @@ def startStream():
         except IncompleteRead as ir:
             sendMail(sub=("Tweepy Filter Function Error " + settings.EMAIL_SUBJECT), text=str(ir))
             continue
-        except Exception as e:
-            if str(e) == "Break for renewing trendlist":
-                break
-            sendMail(sub=("Tweepy Filter Function Error " + settings.EMAIL_SUBJECT), text=str(e))
+        except trendUpdate as e:
+            print("breaking from the loop to update trend list")
             break
 
 
