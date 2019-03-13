@@ -9,7 +9,7 @@ import smtplib
 import ssl
 import threading
 import sys
-from urllib3.exceptions import IncompleteRead as urllib3_incompleteRead
+from urllib3.exceptions import ProtocolError as urllib3_potocolError
 if (sys.version_info > (3, 0)):
     print("Python 3")
     from http.client import IncompleteRead as http_incompleteRead
@@ -194,7 +194,7 @@ def startStream():
     while True:
         try:
             stream.filter(track=track_list_trends, stall_warnings=True)
-        except (http_incompleteRead, urllib3_incompleteRead) as ir:
+        except (http_incompleteRead, urllib3_potocolError) as ir:
             sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
             continue
         except trendUpdate:
