@@ -9,13 +9,13 @@ import smtplib
 import ssl
 import threading
 import sys
-
+from urllib3.exceptions import IncompleteRead as urllib3_incompleteRead
 if (sys.version_info > (3, 0)):
     print("Python 3")
-    from http.client import IncompleteRead
+    from http.client import IncompleteRead as http_incompleteRead
 else:
     print("Python 2")
-    from httplib import IncompleteRead
+    from httplib import IncompleteRead as http_incompleteRead
 
 
 db = dataset.connect(settings.CONNECTION_DATABASE)
@@ -120,11 +120,11 @@ class StreamListener(tweepy.StreamListener):
             elapsed = done - start
             tweetNo += 1
             tweetRateCount += 1
+
             if settings.TRENDDATA_UPDATE:
                 print("Tweet Counter : ", tweetNo, "|| Time to Refresh:", int(settings.REFRESH_TIME - elapsed))
             else:
                 print("Tweet Counter : ", tweetNo)
-
             if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
                 print("Renewing list")
                 raise trendUpdate("Break for renewing trendlist")
@@ -134,7 +134,6 @@ class StreamListener(tweepy.StreamListener):
                     sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
             except ZeroDivisionError as e:
                 pass
-
         except ProgrammingError as err:
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
@@ -142,7 +141,7 @@ class StreamListener(tweepy.StreamListener):
 
     def on_error(self, status_code):
         sendMail(sub=("Tweepy Streaming Class Error " + settings.EMAIL_SUBJECT), text=str(status_code))
-        return False
+        raise Exception(status_code)
 
 
 def sendMailThreading(sub, text):
@@ -195,11 +194,14 @@ def startStream():
     while True:
         try:
             stream.filter(track=track_list_trends, stall_warnings=True)
-        except IncompleteRead as ir:
-            sendMail(sub=("Tweepy Filter Function Error " + settings.EMAIL_SUBJECT), text=str(ir))
+        except (http_incompleteRead, urllib3_incompleteRead) as ir:
+            sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
             continue
-        except trendUpdate as e:
+        except trendUpdate:
             print("breaking from the loop to update trend list")
+            break
+        except Exception as e:
+            sendMail(sub=("Tweepy Stream Time  Error " + settings.EMAIL_SUBJECT), text=str(e))
             break
 
 
