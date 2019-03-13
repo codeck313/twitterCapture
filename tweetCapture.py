@@ -3,11 +3,12 @@ import tweepy
 import dataset
 from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
+from http.client import IncompleteRead
 import json
 import time
 import smtplib
 import ssl
-
+import threading
 
 db = dataset.connect(settings.CONNECTION_DATABASE)
 tweetNo = 0
@@ -110,28 +111,28 @@ class StreamListener(tweepy.StreamListener):
                 print("Tweet Counter : ", tweetNo, "|| Time to Refresh:", int(settings.REFRESH_TIME - elapsed))
             else:
                 print("Tweet Counter : ", tweetNo)
+
             if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
                 print("Renewing list")
-                return False
-            if settings.ALERT_DURATION[0] != 0:
-                if (tweetNo % settings.ALERT_DURATION[0] == 0):
-                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
-            elif settings.ALERT_DURATION[1] != 0:
-                if (tweetNo % settings.ALERT_DURATION[1] == 0):
-                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Currently opperating with No." + str(tweetNo) + " tweets."))
+                raise Exception("Break for renewing trendlist")
+
+            try:
+                if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
+                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
+            except ZeroDivisionError as e:
+                pass
+
         except ProgrammingError as err:
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
             pass
 
     def on_error(self, status_code):
-        sendMail(sub=("Tweepy Capturing Error " + settings.EMAIL_SUBJECT), text=str(status_code))
-        if status_code == 420:
-            # returning False in on_data disconnects the stream
-            return False
+        sendMail(sub=("Tweepy Streaming Class Error " + settings.EMAIL_SUBJECT), text=str(status_code))
+        return False
 
 
-def sendMail(sub="Hi there", text="foobar"):
+def sendMailThreading(sub, text):
     if settings.MAIL_ALERT:
         smtpserver = smtplib.SMTP(settings.SMTP_SERVER, settings.PORT)
         smtpserver.ehlo()
@@ -140,11 +141,14 @@ def sendMail(sub="Hi there", text="foobar"):
         smtpserver.login(settings.SENDER_EMAIL, settings.PASWD)
         message = ("Subject: " + sub + " \n\n " + text).encode("utf-8")
         smtpserver.sendmail(settings.SENDER_EMAIL, settings.RECEVIER_EMAIL, message)
-        print("Sending email To:", settings.RECEVIER_EMAIL)
+        print("Sending email To:", settings.RECEVIER_EMAIL, "Subject :", sub)
         smtpserver.quit()
 
 
-# context = ssl.create_default_context()
+def sendMail(sub="Hi there", text="foobar"):
+    t1 = threading.Thread(target=sendMailThreading, name='t1', args=(sub, text))
+    t1.start()
+
 
 try:
     auth = tweepy.OAuthHandler(settings.TWITTER_KEY, settings.TWITTER_SECRET)
@@ -172,8 +176,23 @@ print(track_list_trends)
 str_track_list = ' \n '.join(track_list_trends)
 sendMail(sub=("Tweet Capture Starting " + settings.EMAIL_SUBJECT), text=("!!STARTING!! Currently capturing " + str_track_list))
 start = time.time()
-stream.filter(track=track_list_trends)
 
+
+def startStream():
+    while True:
+        try:
+            stream.filter(track=track_list_trends, stall_warnings=True)
+        except IncompleteRead as ir:
+            sendMail(sub=("Tweepy Filter Function Error " + settings.EMAIL_SUBJECT), text=str(ir))
+            continue
+        except Exception as e:
+            if str(e) == "Break for renewing trendlist":
+                break
+            sendMail(sub=("Tweepy Filter Function Error " + settings.EMAIL_SUBJECT), text=str(e))
+            break
+
+
+startStream()
 
 while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
     data = api.trends_place(settings.PLACE_CODE)[0]
@@ -188,6 +207,6 @@ while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
     print("starting streaming now!")
     start = done
     tweetRateCount = 0
-    stream.filter(track=track_list_trends)
+    startStream()
     done = time.time()
     elapsed = done - start
