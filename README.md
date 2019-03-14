@@ -1,6 +1,7 @@
-  
+
+
 # twitterCapture
-This is a automation script for *tweepy's streaming class* with some included with some additional features allowing it to be run on a external server to capture data right of the bat. It has **E-Mail notification** and ability to **update** one's **filter terms** based on the **trends list** of a particular area built into it. It stores everything into a sqlite3 database by default.
+This is an automation script for *tweepy's streaming class* included with some additional features allowing it to run on external server to capture data right of the bat. It has **E-Mail notification** and ability to **update** one's **filter terms** based on the **trend's list** of a particular area built into it. It stores everything into a sqlite3 database by default.
 
 ## Table of contents
 
@@ -79,8 +80,9 @@ Now you can mention the number of tweets after which you would like an update fo
     # Will update you once the script has recorded 20 or 200 tweets or its multiple
     ALERT_DURATION = [20,200]
 
-But if you don't want to utilize this feature just use `[0,0]` or you want tweet alert for just one number then use `[YOUR_NO,0]`
+But if you don't want to utilize this feature just use `[0,0]` or you want tweet alert for just one number then use `[YOUR_NO,0]`.
 
+To silence the bug reports being mailed to you set the value of `BUG_ALERT` to `False`
 
 After that just change the boolean value of `MAIL_ALERT` to `True` to start using this feature.
 

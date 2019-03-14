@@ -195,7 +195,10 @@ def startStream():
         try:
             stream.filter(track=track_list_trends, stall_warnings=True)
         except (http_incompleteRead, urllib3_protocolError) as ir:
-            sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
+            if settings.BUG_ALERT is True:
+                sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
+            else:
+                print("Error Occured:", str(ir))
             continue
         except trendUpdate:
             print("breaking from the loop to update trend list")
