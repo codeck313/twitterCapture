@@ -7,7 +7,7 @@ import json
 import time
 import smtplib
 import ssl
-import multiprocessing
+import threading
 import sys
 from urllib3.exceptions import ProtocolError as urllib3_protocolError
 
@@ -34,7 +34,44 @@ class trendUpdate(RuntimeError):
 
 class StreamListener(tweepy.StreamListener):
 
+    def updateStatus(self):
+        global tweetNo
+        global done, elapsed, tweetRateCount
+        done = time.time()
+        elapsed = done - start
+        tweetNo += 1
+        tweetRateCount += 1
+
+        if settings.TRENDDATA_UPDATE:
+            print("Tweet Counter : ", tweetNo, "|| Time to Refresh:", int(settings.REFRESH_TIME - elapsed))
+        else:
+            print("Tweet Counter : ", tweetNo)
+        if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
+            print("Renewing list")
+            raise trendUpdate("Break for renewing trendlist")
+
+        try:
+            if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
+                sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
+        except ZeroDivisionError as e:
+            pass
+
     def on_status(self, status):
+        table = db[settings.TABLE_NAME]
+        t1 = threading.Thread(target=self.updateStatus)
+        t1.start()
+        if hasattr(status, 'retweeted_status'):
+            try:
+                text = status.retweeted_status.extended_tweet["full_text"]
+            except:
+                text = status.retweeted_status.text
+        else:
+            try:
+                text = status.extended_tweet["full_text"]
+            except AttributeError:
+                text = status.text
+        blob = TextBlob(text)
+        sent = blob.sentiment
         description = status.user.description
         loc = status.user.location
         coordinates = status.coordinates
@@ -48,16 +85,11 @@ class StreamListener(tweepy.StreamListener):
         friends_count = status.user.friends_count
         verified_stat = status.user.verified
         user_no_tweet = status.user.statuses_count
-        if hasattr(status, 'retweeted_status'):
-            try:
-                text = status.retweeted_status.extended_tweet["full_text"]
-            except:
-                text = status.retweeted_status.text
-        else:
-            try:
-                text = status.extended_tweet["full_text"]
-            except AttributeError:
-                text = status.text
+        bg_color = status.user.profile_background_color
+        entities = status.entities
+        source = status.source
+        place_name = ''
+        place_corr = ''
 
         try:
             if status.retweeted_status:
@@ -66,13 +98,6 @@ class StreamListener(tweepy.StreamListener):
         except:
             retweeted_s = False
 
-        bg_color = status.user.profile_background_color
-        entities = status.entities
-        source = status.source
-        blob = TextBlob(text)
-        sent = blob.sentiment
-        place_name = ''
-        place_corr = ''
         if coordinates is not None:
             coordinates = json.dumps(coordinates)
 
@@ -87,7 +112,6 @@ class StreamListener(tweepy.StreamListener):
             hashtags = ''.join(hashlist['text'])
 
         table = db[settings.TABLE_NAME]
-
         try:
             table.insert(dict(
                 text=text,
@@ -112,30 +136,11 @@ class StreamListener(tweepy.StreamListener):
                 polarity=sent.polarity,
                 subjectivity=sent.subjectivity,
             ))
-            global tweetNo
-            global done, elapsed, tweetRateCount
-            done = time.time()
-            elapsed = done - start
-            tweetNo += 1
-            tweetRateCount += 1
-
-            if settings.TRENDDATA_UPDATE:
-                print("Tweet Counter : ", tweetNo, "|| Time to Refresh:", int(settings.REFRESH_TIME - elapsed))
-            else:
-                print("Tweet Counter : ", tweetNo)
-            if (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
-                print("Renewing list")
-                raise trendUpdate("Break for renewing trendlist")
-
-            try:
-                if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
-                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
-            except ZeroDivisionError as e:
-                pass
         except ProgrammingError as err:
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
             pass
+        t1.join()
 
     def on_error(self, status_code):
         sendMail(sub=("Tweepy Streaming Class Error " + settings.EMAIL_SUBJECT), text=str(status_code))
@@ -153,6 +158,24 @@ def sendMail(sub="Hi there", text="foobar"):
         smtpserver.sendmail(settings.SENDER_EMAIL, settings.RECEVIER_EMAIL, message)
         print("Sending email To:", settings.RECEVIER_EMAIL, "Subject :", sub)
         smtpserver.quit()
+
+
+def startStream():
+    while True:
+        try:
+            stream.filter(track=track_list_trends)
+        except (http_incompleteRead, urllib3_protocolError) as ir:
+            if settings.BUG_ALERT is True:
+                sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
+            else:
+                print("Error Occured:", str(ir))
+            continue
+        except trendUpdate:
+            print("breaking from the loop to update trend list")
+            break
+        except Exception as e:
+            sendMail(sub=("Tweepy StreamTime Error " + settings.EMAIL_SUBJECT), text=str(e))
+            break
 
 
 try:
@@ -173,25 +196,6 @@ try:
 except Exception as e:
     sendMail(sub=("Tweepy Trend Update Error " + settings.EMAIL_SUBJECT), text=str(e))
     pass
-
-
-def startStream():
-    while True:
-        try:
-            stream.filter(track=track_list_trends)
-        except (http_incompleteRead, urllib3_protocolError) as ir:
-            if settings.BUG_ALERT is True:
-                sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
-            else:
-                print("Error Occured:", str(ir))
-            continue
-        except trendUpdate:
-            print("breaking from the loop to update trend list")
-            break
-        except Exception as e:
-            sendMail(sub=("Tweepy Stream Time  Error " + settings.EMAIL_SUBJECT), text=str(e))
-            break
-
 
 track_list_trends = settings.TRACK_TERMS + names
 print("Starting Capturing:")
