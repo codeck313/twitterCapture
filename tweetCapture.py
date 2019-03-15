@@ -156,7 +156,8 @@ def sendMail(sub="Hi there", text="foobar"):
         smtpserver.login(settings.SENDER_EMAIL, settings.PASWD)
         message = ("Subject: " + sub + " \n\n " + text).encode("utf-8")
         smtpserver.sendmail(settings.SENDER_EMAIL, settings.RECEVIER_EMAIL, message)
-        print("Sending email To:", settings.RECEVIER_EMAIL, "Subject :", sub)
+        print("Sending email To:", settings.RECEVIER_EMAIL)
+        print("Subject:", sub, "Text:", text)
         smtpserver.quit()
 
 
@@ -193,6 +194,7 @@ try:
         data = api.trends_place(settings.PLACE_CODE)[0]
         trends_list = data['trends']
         names = [trend['name'] for trend in trends_list]
+        names = names[:settings.TREND_AMOUNT]
 except Exception as e:
     sendMail(sub=("Tweepy Trend Update Error " + settings.EMAIL_SUBJECT), text=str(e))
     pass
