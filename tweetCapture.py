@@ -10,6 +10,7 @@ import ssl
 import threading
 import sys
 from urllib3.exceptions import ProtocolError as urllib3_protocolError
+
 if (sys.version_info > (3, 0)):
     print("Python 3")
     from http.client import IncompleteRead as http_incompleteRead
@@ -129,11 +130,11 @@ class StreamListener(tweepy.StreamListener):
                 print("Renewing list")
                 raise trendUpdate("Break for renewing trendlist")
 
-            try:
-                if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
-                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
-            except ZeroDivisionError as e:
-                pass
+            # try:
+            if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
+                sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
+            # except ZeroDivisionError as e:
+            #     pass
         except ProgrammingError as err:
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
@@ -182,18 +183,10 @@ except Exception as e:
     pass
 
 
-track_list_trends = settings.TRACK_TERMS + names
-print("Starting Capturing:")
-print(track_list_trends)
-str_track_list = ' \n '.join(track_list_trends)
-sendMail(sub=("Tweet Capture Starting " + settings.EMAIL_SUBJECT), text=("!!STARTING!! Currently capturing " + str_track_list))
-start = time.time()
-
-
 def startStream():
     while True:
         try:
-            stream.filter(track=track_list_trends, stall_warnings=True)
+            stream.filter(track=track_list_trends)
         except (http_incompleteRead, urllib3_protocolError) as ir:
             if settings.BUG_ALERT is True:
                 sendMail(sub=("Tweepy IncompleteRead Error " + settings.EMAIL_SUBJECT), text=str(ir))
@@ -207,6 +200,13 @@ def startStream():
             sendMail(sub=("Tweepy Stream Time  Error " + settings.EMAIL_SUBJECT), text=str(e))
             break
 
+
+track_list_trends = settings.TRACK_TERMS + names
+print("Starting Capturing:")
+print(track_list_trends)
+str_track_list = ' \n '.join(track_list_trends)
+sendMail(sub=("Tweet Capture Starting " + settings.EMAIL_SUBJECT), text=("!!STARTING!! Currently capturing " + str_track_list))
+start = time.time()
 
 startStream()
 
