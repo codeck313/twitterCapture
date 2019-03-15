@@ -7,7 +7,7 @@ import json
 import time
 import smtplib
 import ssl
-import threading
+import multiprocessing
 import sys
 from urllib3.exceptions import ProtocolError as urllib3_protocolError
 
@@ -35,9 +35,6 @@ class trendUpdate(RuntimeError):
 class StreamListener(tweepy.StreamListener):
 
     def on_status(self, status):
-        # UNCOMMENT TO REDUCE AMOUNT OF TWEETS
-        # if status.retweeted_status:
-        #     return
         description = status.user.description
         loc = status.user.location
         coordinates = status.coordinates
@@ -130,11 +127,11 @@ class StreamListener(tweepy.StreamListener):
                 print("Renewing list")
                 raise trendUpdate("Break for renewing trendlist")
 
-            # try:
-            if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
-                sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
-            # except ZeroDivisionError as e:
-            #     pass
+            try:
+                if (tweetNo % settings.ALERT_COUNT[0] == 0) | (tweetNo % settings.ALERT_COUNT[1] == 0):
+                    sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
+            except ZeroDivisionError as e:
+                pass
         except ProgrammingError as err:
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
@@ -145,7 +142,7 @@ class StreamListener(tweepy.StreamListener):
         raise Exception(status_code)
 
 
-def sendMailThreading(sub, text):
+def sendMail(sub="Hi there", text="foobar"):
     if settings.MAIL_ALERT:
         smtpserver = smtplib.SMTP(settings.SMTP_SERVER, settings.PORT)
         smtpserver.ehlo()
@@ -156,11 +153,6 @@ def sendMailThreading(sub, text):
         smtpserver.sendmail(settings.SENDER_EMAIL, settings.RECEVIER_EMAIL, message)
         print("Sending email To:", settings.RECEVIER_EMAIL, "Subject :", sub)
         smtpserver.quit()
-
-
-def sendMail(sub="Hi there", text="foobar"):
-    t1 = threading.Thread(target=sendMailThreading, name='t1', args=(sub, text))
-    t1.start()
 
 
 try:
