@@ -207,6 +207,7 @@ while (elapsed > settings.REFRESH_TIME) & settings.TRENDDATA_UPDATE:
     data = api.trends_place(settings.PLACE_CODE)[0]
     trends_list = data['trends']
     names = [trend['name'] for trend in trends_list]
+    names = names[:settings.TREND_AMOUNT]
     track_list_trends = settings.TRACK_TERMS + names
     str_track_list = ' \n '.join(track_list_trends)
     print("-----------List aquired-------------")
