@@ -34,7 +34,8 @@ class trendUpdate(RuntimeError):
 
 class StreamListener(tweepy.StreamListener):
 
-    def updateStatus(self):
+    def on_status(self, status):
+        table = db[settings.TABLE_NAME]
         global tweetNo
         global done, elapsed, tweetRateCount
         done = time.time()
@@ -55,11 +56,6 @@ class StreamListener(tweepy.StreamListener):
                 sendMail(sub=("Tweet Counter Alert " + settings.EMAIL_SUBJECT), text=("Captured " + str(tweetNo) + " tweets."))
         except ZeroDivisionError as e:
             pass
-
-    def on_status(self, status):
-        table = db[settings.TABLE_NAME]
-        t1 = threading.Thread(target=self.updateStatus)
-        t1.start()
         if hasattr(status, 'retweeted_status'):
             try:
                 text = status.retweeted_status.extended_tweet["full_text"]
@@ -140,7 +136,6 @@ class StreamListener(tweepy.StreamListener):
             print(err)
             sendMail(sub=("Database error " + settings.EMAIL_SUBJECT), text=err)
             pass
-        t1.join()
 
     def on_error(self, status_code):
         sendMail(sub=("Tweepy Streaming Class Error " + settings.EMAIL_SUBJECT), text=str(status_code))
