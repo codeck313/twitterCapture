@@ -1,5 +1,6 @@
 
 
+
 # twitterCapture
 This is an automation script for *tweepy's streaming class* included with some additional features allowing it to run on external server to capture data right of the bat. It has **E-Mail notification** and ability to **update** one's **filter terms** based on the **trend's list** of a particular area built into it. It stores everything into a sqlite3 database by default.
 
@@ -27,7 +28,7 @@ First clone the Git repository from GitHub and install required libraries by:
     cd twitterCapture
     pip install -r requirements.txt
 
-By default it is using using sqlite3. Though you can change it to other DB management system you like.
+By default it is using sqlite3. Though you can change it to other DB management system you like.
 
 To use sqlite3 :
 
@@ -42,7 +43,7 @@ On Linux :
 
 First create a Twitter developer account from here :  [Developer Twitter](http://developer.twitter.com/)
 
-After creating your developer account head over to app section and create a new app : [App Twitter](https://developer.twitter.com/en/apps)
+After creating a new app, get your keys and tokens from the app. If you are unaware about how you can do that, follow this guide: [App Twitter](https://developer.twitter.com/en/apps)
 
 After creation of a new app to get your Keys and tokens from that app follow this: [Guide: Access Token](https://developer.twitter.com/en/docs/basics/authentication/guides/access-tokens.html)
 
@@ -52,11 +53,11 @@ You should now have keys for these fields in `settings.py` :
     TWITTER_SECRET = ""  # "Consumer API Secret key"
     TWITTER_APP_KEY = ""  # "Access token"
     TWITTER_APP_SECRET = "" # "Access token secret"
-Now you could just mention the terms you want to track in a tweet add those to the list `TRACK_TERMS` in `settings.py`.Like below:
+Now add the terms that you would like to track in the tweets in the list. `TRACK_TERMS` in `settings.py`.Like below:
 
     TRACK_TERMS = ["#India","python"]
 
-This is the most basic setup required to start using this script.You can customize it further to suite your personal need.
+This is the most basic setup required to start using this script.You can customize it further to suit your personal need.
 
 ## Customization
 You can customize these things to further utilize the script:
@@ -64,14 +65,15 @@ You can customize these things to further utilize the script:
 ### Enabling Mail Alert
 You can get mail alerts when an error happens in the code or when the trend list updated or when you capture certain amount of tweets.
 
-By default it's using Gmail as the email provider. If you aren't using gmail as you email service change settings `SMTP_SERVER` and `PORT` to meet your email service config.
+By default it's using Gmail as the email provider. If you aren't using Gmail as you email service change settings `SMTP_SERVER` and `PORT` to meet your email service configuration.
 
-Add your email ID and password and which Email ID you wanna send it to:
+Add your Email ID and password to Email ID you wanna send it to:
 
     SENDER_EMAIL = "tutorialSender@twittercap.com"
     PASWD = "123456" #we dont recommend it though ;)
     RECEVIER_EMAIL  = "tutorialReciever@twittercap.com"
-Add the subject name you want to show up in as the subject of the email you will receive
+
+Add what you would like to be displayed as the subject of the mail that you will recieve.
 
     EMAIL_SUBJECT  = "Tutorial"
 
@@ -80,7 +82,7 @@ Now you can mention the number of tweets after which you would like an update fo
     # Will update you once the script has recorded 20 or 200 tweets or its multiple
     ALERT_DURATION = [20,200]
 
-But if you don't want to utilize this feature just use `[0,0]` or you want tweet alert for just one number then use `[YOUR_NO,0]`.
+In the script, change `[0,0]` to a number (Twitter count)at which you want mail alert.
 
 To silence the bug reports being mailed to you set the value of `BUG_ALERT` to `False`
 
@@ -123,7 +125,7 @@ You can mention additional tracking(or filtering) by mentioning them in the `TRA
 About **19** different type of **METADATA** is stored in the database making it the **user's choice** to keep or discard the data her/he doesn't need afterwards instead of ending up with less data from the zero point.
 The different METADATA other than tweets text are:
 * `id_str` : The unique identifier for this tweet.
-* `hastags` : Different hashtags used in a tweets of segregated into this field.
+* `hashtags` : Different Hashtags used in a tweet are segregated into this field.
 * `tweet_created` : As the name suggest it has the tweet's date and time stamp.
 * `user_name` : The user name of the person who tweeted the text.
 * `user_handle` : Her/His handle.
@@ -136,11 +138,11 @@ The different METADATA other than tweets text are:
 * `user_description`  : User's twitter account description.
 * `user_followers` : Number of followers the user's account currently has.
 * `friends_count` : Number of people the user is following.
-* `no_tweet_user` : Number of tweet this user has posted.
+* `no_tweet_user` : Number of tweets this user has posted.
 * `user_created` : Date when the user was created.
 * `user_bg_color` : The hexadecimal color chosen by the user for their background.
 * `entities` : This provides arrays of common things included in Tweets like hashtags, user mentions, links, attached media [and more.](https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/entities-object) This is saved in a form of text so you would need regex to segregate different aspects from it.
-* `polarity` : On a scale of +1 to -1 where does a persons tweets lies on the polarity scale (How positive or negative a text is).
+* `polarity` : Where does a person's tweet lie on the polarity scale.
 * `objectivity` : Whether a tweet presents a facts (higher objectivity) or provides a person's analysis or opinion. [For more details.](https://www.quora.com/Does-an-objective-sentence-imply-a-non-neutral-sentiment)
 
 ## Deployment on  a Linux Server (Raspberry Pi)
